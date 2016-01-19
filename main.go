@@ -43,6 +43,9 @@ func main() {
 }
 
 func generateColors(filename string) {
+	if _, err := os.Stat(filename); err != nil {
+		log.Fatal(err)
+	}
 	colors := anaysisImage(filename)
 
 	sort.Sort(sort.Reverse(ByColor(colors)))
