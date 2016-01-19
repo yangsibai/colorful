@@ -133,7 +133,7 @@ func drawImage(colors []Color) {
 	endX := 0
 	for _, c := range colors {
 		log.Print(c.Color, c.Count, c.Ratio)
-		if int(c.Ratio*float64(width)) > 1 && !isPure(c) {
+		if int(c.Ratio*float64(width)) > 1 && !isWhiteOrGray(c) {
 			endX = startX + int(c.Ratio*float64(width))
 			drawRect(m, color.RGBA{c.Red, c.Green, c.Blue, 255}, startX, 0, endX, height)
 			startX = endX
@@ -147,8 +147,8 @@ func drawImage(colors []Color) {
 	saveImage(m, "output.png")
 }
 
-func isPure(c Color) bool {
-	return c.Red == c.Green && c.Red == c.Blue
+func isWhiteOrGray(c Color) bool {
+	return c.Red != 0 && c.Red == c.Green && c.Red == c.Blue
 }
 
 func drawRect(img *image.RGBA, col color.RGBA, x1, y1, x2, y2 int) {
