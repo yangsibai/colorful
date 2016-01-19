@@ -107,7 +107,7 @@ func anaysisImage(filepath string) map[string]Color {
 }
 
 func drawImage(colors []Color) {
-	width := 200
+	width := 1000
 	height := 40
 
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
