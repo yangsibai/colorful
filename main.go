@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -36,12 +37,12 @@ func main() {
 	log.SetOutput(f)
 
 	if len(argsWithoutProg) > 0 {
-		filepath := argsWithoutProg[0]
-		colors := anaysisImage(filepath)
+		filename := argsWithoutProg[0]
+		colors := anaysisImage(filename)
 
 		sort.Sort(sort.Reverse(ByColor(colors)))
 
-		drawImage(colors)
+		drawImage(colors, getSaveToFilename(filename))
 	}
 }
 
@@ -123,7 +124,7 @@ func (a ByColor) Len() int           { return len(a) }
 func (a ByColor) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByColor) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
-func drawImage(colors []Color) {
+func drawImage(colors []Color, saveTo string) {
 	width := 1000
 	height := 40
 
@@ -144,7 +145,7 @@ func drawImage(colors []Color) {
 		drawRect(m, color.RGBA{255, 255, 255, 255}, startX, width, 0, height)
 	}
 
-	saveImage(m, "output.png")
+	saveImage(m, saveTo)
 }
 
 func isWhiteOrGray(c Color) bool {
@@ -167,4 +168,10 @@ func saveImage(m *image.RGBA, filepath string) {
 		return
 	}
 	png.Encode(myfile, m)
+}
+
+func getSaveToFilename(filename string) string {
+	ext := filepath.Ext(filename)
+	basename := filepath.Base(filename)
+	return filepath.Join(filepath.Dir(filename), basename+"_color"+ext)
 }
