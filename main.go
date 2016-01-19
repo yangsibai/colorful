@@ -38,12 +38,16 @@ func main() {
 
 	if len(argsWithoutProg) > 0 {
 		filename := argsWithoutProg[0]
-		colors := anaysisImage(filename)
-
-		sort.Sort(sort.Reverse(ByColor(colors)))
-
-		drawImage(colors, getSaveToFilename(filename))
+		generateColors(filename)
 	}
+}
+
+func generateColors(filename string) {
+	colors := anaysisImage(filename)
+
+	sort.Sort(sort.Reverse(ByColor(colors)))
+
+	drawImage(colors, getSaveToFilename(filename))
 }
 
 func anaysisImage(filepath string) []Color {
@@ -172,6 +176,5 @@ func saveImage(m *image.RGBA, filepath string) {
 
 func getSaveToFilename(filename string) string {
 	ext := filepath.Ext(filename)
-	basename := filepath.Base(filename)
-	return filepath.Join(filepath.Dir(filename), basename+"_color"+ext)
+	return filepath.Join(filename[0:len(filename)-len(ext)] + "_color" + ext)
 }
