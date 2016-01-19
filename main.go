@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"sort"
 )
 
 type Color struct {
@@ -24,46 +25,27 @@ type Color struct {
 func main() {
 	argsWithoutProg := os.Args[1:]
 
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	if len(argsWithoutProg) > 0 {
 		filepath := argsWithoutProg[0]
-		colorMap := anaysisImage(filepath)
+		colors := anaysisImage(filepath)
 
-		total := 0
-		max := 0
+		sort.Sort(sort.Reverse(ByColor(colors)))
 
-		for _, c := range colorMap {
-			total = total + c.Count
-			if c.Count > max {
-				max = c.Count
-			}
-		}
-
-		totalWithoutMax := total - max
-
-		results := make([]Color, len(colorMap))
-
-		for _, c := range colorMap {
-			results = append(results, Color{
-				Color: c.Color,
-				Count: c.Count,
-				Ratio: float64(c.Count) / float64(total),
-				RatioWithoutBcakground: float64(c.Count) / float64(totalWithoutMax),
-				Red:   c.Red,
-				Green: c.Green,
-				Blue:  c.Blue,
-			})
-		}
-
-		for _, c := range results {
-			if c.RatioWithoutBcakground > 0.01 {
-				fmt.Printf("%s %.2f%%\n", c.Color, c.Ratio*100.0)
-			}
-		}
-		drawImage(results)
+		drawImage(colors)
 	}
 }
 
-func anaysisImage(filepath string) map[string]Color {
+func anaysisImage(filepath string) []Color {
 	reader, err := os.Open(filepath)
 	if err != nil {
 		log.Fatal(err)
@@ -103,8 +85,43 @@ func anaysisImage(filepath string) map[string]Color {
 			}
 		}
 	}
-	return colorMap
+
+	total := 0
+	max := 0
+
+	for _, c := range colorMap {
+		total = total + c.Count
+		if c.Count > max {
+			max = c.Count
+		}
+	}
+
+	totalWithoutMax := total - max
+
+	results := make([]Color, len(colorMap))
+
+	i := 0
+	for _, c := range colorMap {
+		results[i] = Color{
+			Color: c.Color,
+			Count: c.Count,
+			Ratio: float64(c.Count) / float64(total),
+			RatioWithoutBcakground: float64(c.Count) / float64(totalWithoutMax),
+			Red:   c.Red,
+			Green: c.Green,
+			Blue:  c.Blue,
+		}
+		i++
+	}
+
+	return results
 }
+
+type ByColor []Color
+
+func (a ByColor) Len() int           { return len(a) }
+func (a ByColor) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByColor) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
 func drawImage(colors []Color) {
 	width := 1000
@@ -115,9 +132,12 @@ func drawImage(colors []Color) {
 	startX := 0
 	endX := 0
 	for _, c := range colors {
-		endX = startX + int(c.Ratio*float64(width))
-		drawRect(m, color.RGBA{c.Red, c.Green, c.Blue, 255}, startX, 0, endX, height)
-		startX = endX
+		log.Print(c.Color, c.Count, c.Ratio)
+		if int(c.Ratio*float64(width)) > 1 {
+			endX = startX + int(c.Ratio*float64(width))
+			drawRect(m, color.RGBA{c.Red, c.Green, c.Blue, 255}, startX, 0, endX, height)
+			startX = endX
+		}
 	}
 	saveImage(m, "output.png")
 }
