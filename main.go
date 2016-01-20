@@ -168,8 +168,8 @@ func (a ByColor) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByColor) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
 func drawImage(colors []Color, saveTo string) {
-	const width = 10000
-	const height = 40
+	const width = 1000
+	const height = 50
 
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 
