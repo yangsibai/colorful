@@ -39,6 +39,8 @@ func main() {
 	if len(argsWithoutProg) > 0 {
 		filename := argsWithoutProg[0]
 		generateColors(filename)
+	} else {
+		fmt.Println("usage: go run main.go sample.jpg")
 	}
 }
 
