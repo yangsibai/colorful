@@ -7,6 +7,7 @@ import (
 	_ "image/draw"
 	_ "image/jpeg"
 	"image/png"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -38,13 +39,46 @@ func main() {
 
 	if len(argsWithoutProg) > 0 {
 		filename := argsWithoutProg[0]
-		generateColors(filename)
+		f, err := os.Open(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		fi, err := f.Stat()
+		if err != nil {
+			log.Fatal(err)
+		}
+		switch mode := fi.Mode(); {
+		case mode.IsDir():
+			generateColorsForDir(filename)
+		case mode.IsRegular():
+			generateColors(filename)
+		}
 	} else {
 		fmt.Println("usage: go run main.go sample.jpg")
 	}
 }
 
+func generateColorsForDir(dirname string) {
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, f := range files {
+		if f.Mode().IsRegular() {
+			generateColors(filepath.Join(dirname, f.Name()))
+		} else {
+			generateColorsForDir(filepath.Join(dirname, f.Name()))
+		}
+	}
+}
+
 func generateColors(filename string) {
+	if !isValidImage(filename) {
+		log.Printf("%s is not a valid image file", filename)
+		return
+	}
 	if _, err := os.Stat(filename); err != nil {
 		log.Fatal(err)
 	}
@@ -134,8 +168,8 @@ func (a ByColor) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByColor) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
 func drawImage(colors []Color, saveTo string) {
-	width := 1000
-	height := 40
+	const width = 10000
+	const height = 40
 
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 
@@ -182,4 +216,9 @@ func saveImage(m *image.RGBA, filepath string) {
 func getSaveToFilename(filename string) string {
 	ext := filepath.Ext(filename)
 	return filepath.Join(filename[0:len(filename)-len(ext)] + "_color" + ext)
+}
+
+func isValidImage(filename string) bool {
+	ext := filepath.Ext(filename)
+	return ext == ".jpg" || ext == ".png"
 }
