@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -24,8 +25,15 @@ type Color struct {
 	Blue                   uint8
 }
 
+var width int
+var height int
+
 func main() {
-	argsWithoutProg := os.Args[1:]
+	flag.IntVar(&width, "width", 1000, "output image width")
+	flag.IntVar(&height, "height", 100, "output image height")
+	flag.Parse()
+
+	args := flag.Args()
 
 	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
@@ -37,23 +45,24 @@ func main() {
 
 	log.SetOutput(f)
 
-	if len(argsWithoutProg) > 0 {
-		filename := argsWithoutProg[0]
-		f, err := os.Open(filename)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
+	if len(args) > 0 {
+		for _, filename := range args {
+			f, err := os.Open(filename)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
 
-		fi, err := f.Stat()
-		if err != nil {
-			log.Fatal(err)
-		}
-		switch mode := fi.Mode(); {
-		case mode.IsDir():
-			generateColorsForDir(filename)
-		case mode.IsRegular():
-			generateColors(filename)
+			fi, err := f.Stat()
+			if err != nil {
+				log.Fatal(err)
+			}
+			switch mode := fi.Mode(); {
+			case mode.IsDir():
+				generateColorsForDir(filename)
+			case mode.IsRegular():
+				generateColors(filename)
+			}
 		}
 	} else {
 		fmt.Println("usage: go run main.go sample.jpg")
@@ -168,9 +177,6 @@ func (a ByColor) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByColor) Less(i, j int) bool { return a[i].Count < a[j].Count }
 
 func drawImage(colors []Color, saveTo string) {
-	const width = 10000
-	const height = 50
-
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	startX := 0
